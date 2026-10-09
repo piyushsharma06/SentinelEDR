@@ -1,0 +1,36 @@
+# ==============================================================================
+# SentinelEDR Windows Endpoint Agent Configuration Template
+# ==============================================================================
+
+# Backend API Configuration
+backend_url: "http://127.0.0.1:8000"
+agent_api_key: "CHANGE_ME_TO_ENROLLED_AGENT_KEY"
+
+# Enrollment (used when registering with the backend API for the first time)
+enrollment_token: "sentinel-agent-enrollment-secret-key-change-me"
+auto_enroll: true
+
+# Polling Intervals (in seconds)
+process_poll_interval: 5
+network_poll_interval: 10
+health_interval: 30
+
+# Ingestion Batching & Transport
+batch_size: 50
+flush_interval_seconds: 5
+request_timeout_seconds: 10
+max_retries: 3
+backoff_factor_seconds: 2
+
+# Local Persistent Disk Queue (for offline resilience)
+queue_db_path: "agent_queue.db"
+max_queue_items: 2000
+
+# File Activity Monitoring (Strictly Opt-In)
+# Safe demonstration folder only. NEVER configure sensitive user directories!
+file_monitoring_enabled: false
+monitored_directory: "./monitored_test_dir"
+
+# Logging & Privacy
+log_level: "INFO"
+log_file: "agent.log"

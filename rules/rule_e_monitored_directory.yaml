@@ -1,0 +1,34 @@
+id: RULE-005-MONITORED-DIRECTORY-ANOMALY
+name: Suspicious Ransomware Extension or Script Creation in Monitored Directory
+description: Detects creation or modification of known suspicious file extensions (e.g. .locked, .crypto, .enc, .vbs, .ps1, .bat) or rapid modifications within explicitly configured monitored directory.
+severity: medium
+category: Impact / Persistence
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1486"
+  technique_name: "Data Encrypted for Impact"
+  tactic: "Impact"
+detection:
+  event_type: "file_activity"
+  logic: "all"
+  conditions:
+    - field: "action"
+      operator: "in"
+      value:
+        - "created"
+        - "modified"
+        - "renamed"
+    - field: "file_path"
+      operator: "matches_regex"
+      value: "(?i)\\.(locked|crypto|encrypted|wnry|crypted|vbs|bat|ps1|hta)$"
+rationale: |
+  Ransomware and staging droppers rapidly alter file extensions to designated encryptions or drop staging scripts into monitored directories. Monitoring specific designated test/honeypot folders allows safe observation of adversary behavioral patterns.
+evidence_fields:
+  - "file_path"
+  - "action"
+  - "file_size"
+  - "process_id"
+  - "process_name"
+false_positive_notes: |
+  Developers saving scripts in a project directory or backup utilities creating encrypted archives may match this pattern.

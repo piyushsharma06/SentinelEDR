@@ -1,0 +1,46 @@
+id: RULE-002-SCRIPT-CLI-INDICATORS
+name: Suspicious Obfuscated or Evasive Script Command-Line
+description: Detects command-line flags often used by adversaries to bypass execution policies, hide windows, or download remote code via PowerShell or Windows utilities.
+severity: high
+category: Defense Evasion
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1059.001"
+  technique_name: "PowerShell - Execution Policy Bypass"
+  tactic: "Defense Evasion"
+detection:
+  event_type: "process_creation"
+  logic: "all"
+  conditions:
+    - field: "process_name"
+      operator: "in"
+      value:
+        - "powershell.exe"
+        - "pwsh.exe"
+        - "cmd.exe"
+        - "certutil.exe"
+        - "bitsadmin.exe"
+        - "curl.exe"
+    - field: "command_line"
+      operator: "matches_any_substring"
+      value:
+        - "-enc"
+        - "-encodedcommand"
+        - "bypass"
+        - "-w hidden"
+        - "-windowstyle hidden"
+        - "downloadstring"
+        - "iex("
+        - "invoke-expression"
+        - "urlcache -split -f"
+rationale: |
+  Adversaries and droppers routinely pass encoded commands or execution bypass parameters to PowerShell and command utilities to evade detection, suppress visible windows, and execute arbitrary in-memory payloads without writing files to disk.
+evidence_fields:
+  - "process_id"
+  - "process_name"
+  - "command_line"
+  - "parent_process_name"
+  - "username"
+false_positive_notes: |
+  Certain enterprise deployment agents (e.g., software installation packages or remote management tools like SCCM/Puppet) may legitimate run hidden scripts or bypass execution policies for unattended installations. Verify signing status and parent lineage.

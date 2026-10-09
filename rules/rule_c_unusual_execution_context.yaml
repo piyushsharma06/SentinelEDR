@@ -1,0 +1,37 @@
+id: RULE-003-UNUSUAL-EXEC-CONTEXT
+name: Suspicious Executable Execution from Temporary or AppData Directory
+description: Detects executable binaries launching directly from user AppData, Temp, or Public directories, frequently indicative of dropped malware or staged payloads.
+severity: medium
+category: Persistence / Defense Evasion
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1036.005"
+  technique_name: "Masquerading: Match Legitimate Name or Location"
+  tactic: "Defense Evasion"
+detection:
+  event_type: "process_creation"
+  logic: "all"
+  conditions:
+    - field: "process_path"
+      operator: "matches_any_substring"
+      value:
+        - "\\appdata\\local\\temp\\"
+        - "\\appdata\\roaming\\"
+        - "\\users\\public\\"
+        - "/tmp/"
+        - "/var/tmp/"
+    - field: "process_name"
+      operator: "matches_regex"
+      value: "(?i)\\.(exe|scr|vbs|bat|cmd|ps1)$"
+rationale: |
+  Standard production software generally installs into Program Files or system directories. Attackers and droppers often drop binaries in user-writable paths like %TEMP% or %APPDATA% to bypass standard file system permission checks and execute without elevated administrator privileges.
+evidence_fields:
+  - "process_id"
+  - "process_name"
+  - "process_path"
+  - "command_line"
+  - "parent_process_name"
+  - "username"
+false_positive_notes: |
+  Installers (like Squirrel installers for Discord, Teams, VS Code, or browser update utilities) frequently unpack into %TEMP% or %LOCALAPPDATA%. Check if the binary is digitally signed or belongs to a known verified software vendor.

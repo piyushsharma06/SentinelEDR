@@ -1,0 +1,63 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentinel-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-sentinel_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sentinel_password}
+      POSTGRES_DB: ${POSTGRES_DB:-sentinel_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sentinel_user} -d ${POSTGRES_DB:-sentinel_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sentinel-internal
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: sentinel-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sentinel_user}:${POSTGRES_PASSWORD:-sentinel_password}@postgres:5432/${POSTGRES_DB:-sentinel_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-sentinel-prod-secret-change-this-in-env-file}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-SentinelAdmin!2026Secure}
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173
+      RULES_DIR: /app/rules
+      DEMO_MODE: "true"
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - sentinel-internal
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: sentinel-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:3000:80"
+    networks:
+      - sentinel-internal
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  sentinel-internal:
+    driver: bridge

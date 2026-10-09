@@ -1,0 +1,43 @@
+id: RULE-004-SUSPICIOUS-NETWORK
+name: Suspicious Outbound Network Connection from Scripting Utility or Shell
+description: Detects outbound network socket connections established directly by command shells or scripting tools (cmd.exe, powershell.exe, mshta.exe, certutil.exe) to non-local IP addresses.
+severity: high
+category: Command and Control
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1071.001"
+  technique_name: "Application Layer Protocol: Web Protocols"
+  tactic: "Command and Control"
+detection:
+  event_type: "network_connection"
+  logic: "all"
+  conditions:
+    - field: "process_name"
+      operator: "in"
+      value:
+        - "powershell.exe"
+        - "pwsh.exe"
+        - "cmd.exe"
+        - "certutil.exe"
+        - "mshta.exe"
+        - "cscript.exe"
+        - "wscript.exe"
+    - field: "remote_address"
+      operator: "not_in_cidr_or_local"
+      value:
+        - "127.0.0.1"
+        - "::1"
+        - "0.0.0.0"
+rationale: |
+  Administrative shells rarely establish direct outbound connections to external IP addresses on typical user workstations, except during intentional script downloads or reverse-shell / C2 beaconing activities.
+evidence_fields:
+  - "process_id"
+  - "process_name"
+  - "local_address"
+  - "local_port"
+  - "remote_address"
+  - "remote_port"
+  - "protocol"
+false_positive_notes: |
+  Legitimate PowerShell management scripts downloading modules from PowerShell Gallery (NuGet) or internal WSUS servers may trigger this alert. Correlate with remote ports (80/443) and hostnames.

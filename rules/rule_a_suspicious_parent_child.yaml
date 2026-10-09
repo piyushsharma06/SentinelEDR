@@ -1,0 +1,50 @@
+id: RULE-001-PARENT-CHILD
+name: Suspicious Script Interpreter Spawned by Office or Web Application
+description: Detects when a scripting interpreter or shell (powershell.exe, cmd.exe, wscript.exe, cscript.exe, bash) is spawned by an office productivity app, browser, or web server process.
+severity: high
+category: Execution
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1059.001"
+  technique_name: "Command and Scripting Interpreter: PowerShell"
+  tactic: "Execution"
+detection:
+  event_type: "process_creation"
+  logic: "all"
+  conditions:
+    - field: "parent_process_name"
+      operator: "in"
+      value:
+        - "winword.exe"
+        - "excel.exe"
+        - "powerpnt.exe"
+        - "outlook.exe"
+        - "chrome.exe"
+        - "msedge.exe"
+        - "firefox.exe"
+        - "w3wp.exe"
+        - "httpd.exe"
+        - "nginx.exe"
+    - field: "process_name"
+      operator: "in"
+      value:
+        - "powershell.exe"
+        - "pwsh.exe"
+        - "cmd.exe"
+        - "wscript.exe"
+        - "cscript.exe"
+        - "mshta.exe"
+        - "bash.exe"
+rationale: |
+  Productivity software and web browsers should rarely directly spawn command shells or scripting interpreters during standard end-user workflows. Attackers frequently use malicious macros, weaponized documents, or browser exploitation chains to gain execution via child interpreters.
+evidence_fields:
+  - "process_id"
+  - "process_name"
+  - "process_path"
+  - "parent_process_id"
+  - "parent_process_name"
+  - "command_line"
+  - "username"
+false_positive_notes: |
+  Legitimate administrative add-ins or custom VBA macros in enterprise environments might launch command prompts. Inspect the specific command-line arguments and user context to distinguish administrative automation from exploitation.

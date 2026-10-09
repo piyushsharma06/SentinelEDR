@@ -1,0 +1,34 @@
+id: RULE-006-AGENT-HEALTH-ANOMALY
+name: Endpoint Agent Health Stale or Collection Errors Exceeded
+description: Detects when an endpoint agent reports consecutive internal collection errors, degraded status, or has failed to deliver healthy heartbeat signals.
+severity: low
+category: Defense Evasion / System Integrity
+enabled: true
+version: "1.0.0"
+mitre_attack:
+  technique_id: "T1562.001"
+  technique_name: "Impair Defenses: Disable or Modify Tools"
+  tactic: "Defense Evasion"
+detection:
+  event_type: "agent_health"
+  logic: "any"
+  conditions:
+    - field: "status"
+      operator: "in"
+      value:
+        - "degraded"
+        - "error"
+        - "stale"
+    - field: "consecutive_collection_errors"
+      operator: "greater_than"
+      value: 3
+rationale: |
+  Attackers frequently attempt to disrupt or tamper with security sensors and EDR agents to evade detection before deploying payload stages. Detecting internal agent sensor degradation flags potential tampering or host network segregation.
+evidence_fields:
+  - "status"
+  - "consecutive_collection_errors"
+  - "last_error_message"
+  - "agent_version"
+  - "memory_usage_mb"
+false_positive_notes: |
+  Host network connectivity issues, low host resources, or operating system upgrades may cause temporary agent telemetry degradation.
